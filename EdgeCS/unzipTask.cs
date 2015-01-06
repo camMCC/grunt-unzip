@@ -14,9 +14,11 @@ public class Startup {
             Path = (string)input["path"],
             Dest = (string)input["dest"],
             Log = (Func<object, Task<object>>)input["log"],
+            Success = (Func<object, Task<object>>)input["success"],
             ShouldExtract = (Func<object, Task<object>>)input["match"],
             Flatten = (bool)input["flatten"],
             Overwrite = (bool)input["overwrite"],
+            LeaveOriginalDate = (bool)input["leaveOriginalDate"],
         };
 
         var archive = ZipFile.OpenRead(options.Path);
@@ -35,12 +37,21 @@ public class Startup {
 
                 options.Log(pathToExtract);
 
+                // Make sure the path exists
                 Directory.CreateDirectory(Path.GetDirectoryName(pathToExtract));
                 archiveFile.ExtractToFile(pathToExtract, options.Overwrite);
+
+                if (!options.LeaveOriginalDate) {
+                    options.Log("overwrite date");
+                    File.SetLastWriteTime(pathToExtract, DateTime.Now);
+                }
+
+                // Log a successful extraction
+                options.Success("Extracted: " + pathToExtract);
             }
         }
 
-        return "blue";
+        return null;
     }
 
 }
